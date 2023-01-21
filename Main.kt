@@ -41,29 +41,55 @@ enum class Letters(val letter: Char, val list: List<String>) {
     }
 }
 
-/*fun padCenter() {
-    val spaces: Int = length - str.Length
-    val padLeft: Int = spaces / 2 + str.Length
-    return str.PadLeft(padLeft).PadRight(length)
-}*/
 
 fun main() {
     println("Enter name and surname:")
     val name = readln().lowercase()
     println("Enter person's status:")
     val status = readln()
-    val tagLength = name.length * 5 + 1
 
-    print("*".repeat(tagLength))
+    val countJ = name.count { it == 'j'}
+    val countW = name.count { it == 'w'}
+    val countI = name.count { it == 'i'}
+    val countT = name.count { it == 't'}
+    val countY = name.count { it == 'y'}
+    val countSpace = name.count { it == ' '}
+
+    val tagLength = countJ * 2 + countW * 5 + countI + countT * 3 + countY * 5 + countSpace * 6 +
+             (name.length - countJ - countW - countI - countT - countY - countSpace) * 4 + name.length - 2
+
+    val length: Int = if (tagLength > status.length) tagLength + 5 else status.length + 6
+
+    val statusMargins =
+        if ((tagLength % 2 == 1 && status.length % 2 == 1) || (tagLength % 2 == 0 && status.length % 2 == 0)) {
+        (tagLength - status.length - 1) / 2 + 2
+    }
+    else {
+        (tagLength - status.length) / 2 + 2
+    }
+
+    val tagMargins =
+        if ((tagLength % 2 == 1 && status.length % 2 == 1) || (tagLength % 2 == 0 && status.length % 2 == 0)) {
+            (length - tagLength - 1) / 2
+    }
+    else {
+            (length - tagLength - 1) / 2
+    }
+
+
+    print("*".repeat(length))
     println()
     repeat(3) {
-        print("*  ")
-        println(Letters.getLetter(name, it) + " *")
+        print("*")
+        print("%-${if (status.length > tagLength) tagMargins else 2}s".format("") +
+                Letters.getLetter(name, it) +
+                "%${if (status.length > tagLength) (length - tagLength) / 2 - 1 else 1}s".format(""))
+        println("*")
     }
     print("*")
-    print("%${tagLength / 2 + status.length / 2}s%-${tagLength / 2 - status.length / 2}s".format(status, "") + "*")
-    println()
-    print("*".repeat(tagLength))
-    //println(Letters.getLetter())
-
+    print("%-${if (status.length < tagLength) statusMargins else 2}s".format("") +
+            status +
+            "%${if (status.length < tagLength) (tagLength - status.length) / 2 + 2 else 2}s".format(""))
+    println("*")
+    print("*".repeat(length))
 }
