@@ -1,95 +1,83 @@
 package signature
 
-enum class Letters(val letter: Char, val list: List<String>) {
-    A('a', listOf("____", "|__|", "|  |")),
-    B('b',  listOf("___ ", "|__]", "|__]")),
-    C('c' , listOf("____", "|   ", "|___")),
-    D('d' , listOf("___ ", "|  \\", "|__/")),
-    E('e' , listOf("____", "|___", "|___")),
-    F('f' , listOf("____", "|___", "|   ")),
-    G('g' , listOf("____", "| __", "|__]")),
-    H('h' , listOf("_  _", "|__|", "|  |")),
-    I('i' , listOf("_", "|", "|")),
-    J('j' , listOf(" _", " |", "_|")),
-    K('k' , listOf("_  _", "|_/ ", "| \\_")),
-    L('l' , listOf("_   ", "|   ", "|___")),
-    M('m' , listOf("_  _", "|\\/|", "|  |")),
-    N('n' , listOf("_  _", "|\\ |", "| \\|")),
-    O('o' , listOf("____", "|  |", "|__|")),
-    P('p' , listOf("___ ", "|__]", "|   ")),
-    Q('q' , listOf("____", "|  |", "|_\\|")),
-    R('r' , listOf("____", "|__/", "|  \\")),
-    S('s' , listOf("____", "[__ ", "___]")),
-    T('t' , listOf("___", " | ", " | ")),
-    U('u' , listOf("_  _", "|  |", "|__|")),
-    V('v' , listOf("_  _", "|  |", " \\/ ")),
-    W('w' , listOf("_ _ _", "| | |", "|_|_|")),
-    X('x' , listOf("_  _", " \\/ ", "_/\\_")),
-    Y('y' , listOf("_   _", " \\_/ ", "  |  ")),
-    Z('z' , listOf("___ ", "  / ", " /__")),
-    ELSE( ' ', listOf("    ", "    ", "    "));
+import java.io.File
+import kotlin.system.exitProcess
 
-    companion object {
-        fun getLetter(name: String, index: Int): String {
-            var result = ""
-            name.forEach {
-                val character = it
-                result += values().firstOrNull { it.letter == character }!!.list[index] + " "
-            }
-            return result
+// Getting text from font files
+fun getText(name: String, letters: List<String>, lines: Int, spaces: Int): MutableList<MutableList<String>> {
+    val text = mutableListOf<MutableList<String>>()
+    var index = 0
+    var counter = 0
+    name.forEach {
+        val letter = it
+        letters.forEach {
+            if (it.matches("""$letter\s\d+""".toRegex())) index = letters.indexOf(it)
         }
+
+        text.add(mutableListOf())
+        repeat(lines) {
+            if (letter == ' ') text[counter].add(" ".repeat(spaces)) else text[counter].add(letters[index + it + 1])
+        }
+        counter++
     }
+    return text
 }
-
-
+// Reading fonts from files and printing tags
 fun main() {
     println("Enter name and surname:")
-    val name = readln().lowercase()
+    val name = readln()
     println("Enter person's status:")
     val status = readln()
 
-    val countJ = name.count { it == 'j'}
-    val countW = name.count { it == 'w'}
-    val countI = name.count { it == 'i'}
-    val countT = name.count { it == 't'}
-    val countY = name.count { it == 'y'}
-    val countSpace = name.count { it == ' '}
 
-    val tagLength = countJ * 2 + countW * 5 + countI + countT * 3 + countY * 5 + countSpace * 6 +
-             (name.length - countJ - countW - countI - countT - countY - countSpace) * 4 + name.length - 2
+    val romanFile = File("src/roman.txt")
+    val mediumFile = File("src/medium.txt")
+    if (!romanFile.exists()) exitProcess(1)
+    if (!mediumFile.exists()) exitProcess(1)
+    val romanLetters = romanFile.readLines()
+    val mediumLetters = mediumFile.readLines()
 
-    val length: Int = if (tagLength > status.length) tagLength + 5 else status.length + 6
+    val romanText = getText(name, romanLetters, 10, 10)
+    val mediumText = getText(status, mediumLetters, 3, 5)
+    printTag(romanText, mediumText)
+}
+// Printing tag depending on length of name or status
+fun printTag(romanText: MutableList<MutableList<String>>, mediumText: MutableList<MutableList<String>>) {
+    var tagLength = 0
+    var statusLength = 0
+    romanText.forEach { tagLength += it[0].length }
+    mediumText.forEach { statusLength += it[0].length }
 
-    val statusMargins =
-        if ((tagLength % 2 == 1 && status.length % 2 == 1) || (tagLength % 2 == 0 && status.length % 2 == 0)) {
-        (tagLength - status.length - 1) / 2 + 2
-    }
-    else {
-        (tagLength - status.length) / 2 + 2
-    }
+    val borderLength: Int = if (tagLength > statusLength) tagLength + 8 else statusLength + 8
 
-    val tagMargins =
-        if ((tagLength % 2 == 1 && status.length % 2 == 1) || (tagLength % 2 == 0 && status.length % 2 == 0)) {
-            (length - tagLength - 1) / 2
-    }
-    else {
-            (length - tagLength - 1) / 2
-    }
+    val tagMargins = (statusLength - tagLength) / 2 + ((statusLength - tagLength) % 2)
+    val statusMargins = (tagLength - statusLength) / 2 + ((tagLength - statusLength) % 2)
 
-
-    print("*".repeat(length))
+    print("8".repeat(borderLength))
     println()
-    repeat(3) {
-        print("*")
-        print("%-${if (status.length > tagLength) tagMargins else 2}s".format("") +
-                Letters.getLetter(name, it) +
-                "%${if (status.length > tagLength) (length - tagLength) / 2 - 1 else 1}s".format(""))
-        println("*")
+    repeat(10) {
+        print("88")
+        print(
+            "%${if (statusLength > tagLength) (statusLength - tagLength) / 2 else ""}s%-2s".format("", "") +
+                    getLetter(romanText, it) +
+                    "%${if (statusLength > tagLength) tagMargins else ""}s%2s".format("", "")
+        )
+        println("88")
     }
-    print("*")
-    print("%-${if (status.length < tagLength) statusMargins else 2}s".format("") +
-            status +
-            "%${if (status.length < tagLength) (tagLength - status.length) / 2 + 2 else 2}s".format(""))
-    println("*")
-    print("*".repeat(length))
+    repeat(3) {
+        print("88")
+        print(
+            "%${if (statusLength < tagLength) (tagLength - statusLength) / 2 else ""}s%-2s".format("", "") +
+                    getLetter(mediumText, it) +
+                    "%${if (statusLength < tagLength) statusMargins else ""}s%2s".format("", "")
+        )
+        println("88")
+    }
+    print("8".repeat(borderLength))
+}
+// Getting letter from list of 'characters'
+fun getLetter(name: MutableList<MutableList<String>>, index:Int) : String{
+    var result = ""
+    name.forEach { result += it[index] }
+    return result
 }
